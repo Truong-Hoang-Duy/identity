@@ -12,18 +12,25 @@ import com.test.devteria.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor  // Tạo các constructor khi có biến là final
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 //    @Autowired
 //    private final UserRepository userRepository;
 
@@ -56,10 +63,19 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public List<User> getUsers() {
-        return userRepository.findAll();
+    // PreAuthorize: Kiểm tra trước role = admin, nếu bằng thì mới chạy hàm
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserResponse> getUsers() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
     }
 
+    // PostAuthorize chạy hàm trước, sau đó kiểm tra role = admin
+//    @PostAuthorize("hasRole('ADMIN')")
+    @PostAuthorize("returnObject.username == authentication.name") //Kiểm tra id trên url có bằng với giá trị hay không
     public UserResponse getUserId(String userId) {
         return userMapper.toUserResponse(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
     }
@@ -79,5 +95,12 @@ public class UserService {
 
     public void deleteUser(String userId) {
         userRepository.deleteById(userId);
+    }
+
+    public UserResponse getMyInfo() {
+        var securityContext = SecurityContextHolder.getContext();
+        String name = securityContext.getAuthentication().getName();
+        User user = userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
     }
 }

@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 //    @Autowired
 //    private UserService userService;
 
@@ -32,8 +36,15 @@ public class UserController {
     }
 
     @GetMapping()
-    public List<User> getUsers() {
-        return userService.getUsers();
+    public ApiResponse<List<UserResponse>> getUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Authenticated username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(grantedAuthority ->
+                log.info("GrantedAuthority: {}", grantedAuthority.getAuthority())
+        );
+
+        return ApiResponse.<List<UserResponse>>builder().result(userService.getUsers()).build();
     }
 
     @GetMapping("/{userId}")
@@ -50,6 +61,11 @@ public class UserController {
     public String deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
         return "Deleted User";
+    }
+
+    @GetMapping("/myInfo")
+    ApiResponse<UserResponse> getMyInfo() {
+        return ApiResponse.<UserResponse>builder().result(userService.getMyInfo()).build();
     }
 }
 

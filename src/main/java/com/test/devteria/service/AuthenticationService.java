@@ -9,6 +9,7 @@ import com.test.devteria.dto.request.AuthenticationRequest;
 import com.test.devteria.dto.request.IntrospectRequest;
 import com.test.devteria.dto.response.AuthenticationResponse;
 import com.test.devteria.dto.response.IntrospectResponse;
+import com.test.devteria.entity.User;
 import com.test.devteria.exception.AppException;
 import com.test.devteria.exception.ErrorCode;
 import com.test.devteria.repository.UserRepository;
@@ -21,11 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Slf4j
 @Service
@@ -47,24 +50,33 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.USER_NOT_EXIST);
         }
 
-        var token = generateToken(authenticationRequest.getUsername());
+        var token = generateToken(user);
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
                 .build();
     }
 
+    private String buildScope(User user) {
+        StringJoiner scope = new StringJoiner(" ");
+        if (!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles().forEach(scope::add);
+        }
+
+        return scope.toString();
+    }
+
     // method create token
-    private String generateToken(String username) {
+    private String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(username)
+                .subject(user.getUsername())
                 .issuer("devteria.com")  //Người tạo token thường là trang web
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli() //Hết hạn thời gian sau 1h
                 ))
-                .claim("customClaim", "Custom")
+                .claim("scope", buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
