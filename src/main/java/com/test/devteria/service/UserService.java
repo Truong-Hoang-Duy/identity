@@ -4,6 +4,7 @@ import com.test.devteria.dto.request.UserRequest;
 import com.test.devteria.dto.request.UserUpdateRequest;
 import com.test.devteria.dto.response.UserResponse;
 import com.test.devteria.entity.User;
+import com.test.devteria.enums.Role;
 import com.test.devteria.exception.AppException;
 import com.test.devteria.exception.ErrorCode;
 import com.test.devteria.mapper.UserMapper;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -27,6 +29,7 @@ public class UserService {
 
     UserRepository userRepository;
     UserMapper userMapper;
+    PasswordEncoder passwordEncoder;
 
     public User createUser(UserRequest userRequest) {
 
@@ -41,9 +44,14 @@ public class UserService {
 //        user.setFirstName(userRequest.getFirstName());
 //        user.setLastName(userRequest.getLastName());
 //        user.setDob(userRequest.getDob());
+
         User user = userMapper.toUser(userRequest); // Same as above
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+//        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);   Bean thay thế
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+
+        HashSet<String> roles = new HashSet<>();
+        roles.add(Role.USER.name());
+        user.setRoles(roles);
 
         return userRepository.save(user);
     }
