@@ -15,5 +15,7 @@ public interface UserMapper {
 //    @Mapping(source = "firstName", target = "lastName")   // Dữ liệu firstName thành lastName
 //    @Mapping(target = "lastName", ignore = true)          // Bỏ qua lastName
     UserResponse toUserResponse(User user);
+
+    @Mapping(target = "roles", ignore = true)
     void updateUser(@MappingTarget User user, UserUpdateRequest userUpdateRequest);
 }

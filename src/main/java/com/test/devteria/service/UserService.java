@@ -8,6 +8,7 @@ import com.test.devteria.enums.Role;
 import com.test.devteria.exception.AppException;
 import com.test.devteria.exception.ErrorCode;
 import com.test.devteria.mapper.UserMapper;
+import com.test.devteria.repository.RoleRepository;
 import com.test.devteria.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class UserService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    RoleRepository roleRepository;
 
     public User createUser(UserRequest userRequest) {
 
@@ -58,7 +60,7 @@ public class UserService {
 
         HashSet<String> roles = new HashSet<>();
         roles.add(Role.USER.name());
-        user.setRoles(roles);
+        //user.setRoles(roles);
 
         return userRepository.save(user);
     }
@@ -83,6 +85,10 @@ public class UserService {
     public UserResponse updateUser(String userId, UserUpdateRequest userUpdateRequest) {
         User user =  userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         userMapper.updateUser(user, userUpdateRequest);
+        user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
+
+        var roles = roleRepository.findAllById(userUpdateRequest.getRoles());
+        user.setRoles(new HashSet<>(roles));
 
 //        user.setPassword(userUpdateRequest.getPassword());
 //        user.setFirstName(userUpdateRequest.getFirstName());

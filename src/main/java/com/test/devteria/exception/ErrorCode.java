@@ -15,7 +15,7 @@ public enum ErrorCode {
     PASSWORD_INVALID(409, "Password is Invalid", HttpStatus.NOT_FOUND),
     INVALID(409, "Invalid Enum", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(401, "You do not have permission", HttpStatus.UNAUTHORIZED),
-
+    INVALID_DOB(400, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
     UNCAUGHT_EXCEPTION(500, "Uncaught Exception", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 

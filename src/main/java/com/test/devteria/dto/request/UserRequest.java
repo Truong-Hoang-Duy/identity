@@ -1,6 +1,7 @@
 package com.test.devteria.dto.request;
 
 import com.test.devteria.exception.ErrorCode;
+import com.test.devteria.validator.DobConstraint;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +23,8 @@ public class UserRequest {
     String password;
     String firstName;
     String lastName;
-    LocalDate dob;
 
+    // Custom anotation
+    @DobConstraint(min = 18, message = "INVALID_DOB")
+    LocalDate dob;
 }
